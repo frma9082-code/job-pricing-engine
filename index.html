@@ -1,173 +1,65 @@
-<!doctype html>
-<html lang="en">
+
+<!DOCTYPE html>
+<html>
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Job Pricing Engine</title>
-  <link rel="stylesheet" href="style.css" />
+<title>Contractor Profit Command System</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand">
-      <div class="logo">JPE</div>
-      <div class="brandtext">
-        <div class="name">Job Pricing Engine</div>
-        <div class="tag">Bid with profit — stop underbidding</div>
-      </div>
-    </div>
-    <div class="actions">
-      <button class="btn" id="btnNew">New</button>
-      <button class="btn" id="btnSave">Save</button>
-      <button class="btn" id="btnExport">Export CSV</button>
-    </div>
-  </header>
+<div class="sidebar">
+<h2>CPCS</h2>
+<button onclick="show('dashboard')">Dashboard</button>
+<button onclick="show('bid')">Bid Engine</button>
+<button onclick="show('breakeven')">Break-Even</button>
+<button onclick="show('scenario')">Scenario Lab</button>
+<button onclick="show('tracker')">Margin Tracker</button>
+</div>
 
-  <main class="wrap">
-    <section class="panel">
-      <h2>Project Inputs</h2>
+<div class="content">
 
-      <div class="grid">
-        <div class="field">
-          <label>Project Name</label>
-          <input id="projectName" type="text" placeholder="e.g., Kitchen Remodel" />
-        </div>
-        <div class="field">
-          <label>Client</label>
-          <input id="clientName" type="text" placeholder="Optional" />
-        </div>
+<div id="dashboard" class="panel">
+<h1>Financial Command Dashboard</h1>
+<p>Total Revenue: <span id="rev">$0</span></p>
+<p>Average Margin: <span id="margin">0%</span></p>
+<p>Underbid Risk Alerts: <span id="risk">0</span></p>
+</div>
 
-        <div class="field">
-          <label>Materials ($)</label>
-          <input id="materials" type="number" min="0" step="0.01" />
-        </div>
-        <div class="field">
-          <label>Subs / Trades ($)</label>
-          <input id="subs" type="number" min="0" step="0.01" />
-        </div>
+<div id="bid" class="panel hidden">
+<h1>Bid Intelligence Engine</h1>
+<input id="materials" placeholder="Materials Cost">
+<input id="laborHours" placeholder="Labor Hours">
+<input id="laborRate" placeholder="Labor Rate">
+<input id="overhead" placeholder="Overhead %">
+<input id="profit" placeholder="Target Profit %">
+<button onclick="calculateBid()">Calculate</button>
+<p id="bidResult"></p>
+</div>
 
-        <div class="field">
-          <label>Labor Hours</label>
-          <input id="laborHours" type="number" min="0" step="0.1" />
-        </div>
-        <div class="field">
-          <label>Base Labor Rate ($/hr)</label>
-          <input id="laborRate" type="number" min="0" step="0.01" />
-        </div>
+<div id="breakeven" class="panel hidden">
+<h1>Monthly Break-Even Calculator</h1>
+<input id="monthlyOverhead" placeholder="Monthly Overhead">
+<input id="targetMargin" placeholder="Target Margin %">
+<button onclick="calculateBreakEven()">Calculate</button>
+<p id="breakResult"></p>
+</div>
 
-        <div class="field">
-          <label>Labor Burden (%)</label>
-          <input id="laborBurdenPct" type="number" min="0" step="0.1" />
-          <div class="hint">Payroll taxes, workers comp, benefits, etc.</div>
-        </div>
-        <div class="field">
-          <label>Overhead (%)</label>
-          <input id="overheadPct" type="number" min="0" step="0.1" />
-          <div class="hint">Fuel, insurance, tools, admin, phone, rent…</div>
-        </div>
+<div id="scenario" class="panel hidden">
+<h1>Scenario Stress Test</h1>
+<input id="scenarioIncrease" placeholder="Labor Increase %">
+<button onclick="runScenario()">Simulate</button>
+<p id="scenarioResult"></p>
+</div>
 
-        <div class="field">
-          <label>Target Profit (%)</label>
-          <input id="targetProfitPct" type="number" min="0" step="0.1" />
-          <div class="hint">Your goal profit percent on the full price</div>
-        </div>
-        <div class="field">
-          <label>Contingency (%)</label>
-          <input id="contingencyPct" type="number" min="0" step="0.1" />
-          <div class="hint">For surprises / change orders / waste</div>
-        </div>
+<div id="tracker" class="panel hidden">
+<h1>Margin Tracker</h1>
+<input id="jobRevenue" placeholder="Job Revenue">
+<input id="jobCost" placeholder="Job Cost">
+<button onclick="trackMargin()">Track</button>
+<p id="trackResult"></p>
+</div>
 
-        <div class="field">
-          <label>Deposit (%)</label>
-          <input id="depositPct" type="number" min="0" step="0.1" />
-          <div class="hint">Optional cashflow control</div>
-        </div>
-        <div class="field">
-          <label>Current Bid Price ($)</label>
-          <input id="currentBid" type="number" min="0" step="0.01" />
-          <div class="hint">Enter what you were going to charge (optional)</div>
-        </div>
-      </div>
+</div>
 
-      <div class="row">
-        <button class="btn primary" id="btnCalc">Calculate</button>
-        <button class="btn" id="btnExample">Load Example</button>
-      </div>
-    </section>
-
-    <section class="panel">
-      <h2>Decision Dashboard</h2>
-
-      <div class="kpis">
-        <div class="kpi">
-          <div class="kpiLabel">Direct Costs</div>
-          <div class="kpiValue" id="kDirectCosts">$0.00</div>
-          <div class="kpiSub">Materials + Subs + Labor (burdened)</div>
-        </div>
-        <div class="kpi">
-          <div class="kpiLabel">Overhead</div>
-          <div class="kpiValue" id="kOverhead">$0.00</div>
-          <div class="kpiSub">Allocated on direct costs</div>
-        </div>
-        <div class="kpi">
-          <div class="kpiLabel">Required Bid</div>
-          <div class="kpiValue emph" id="kRequiredBid">$0.00</div>
-          <div class="kpiSub">Hits target profit + contingency</div>
-        </div>
-        <div class="kpi">
-          <div class="kpiLabel">Target Profit ($)</div>
-          <div class="kpiValue" id="kProfitDollars">$0.00</div>
-          <div class="kpiSub">At required bid</div>
-        </div>
-      </div>
-
-      <div class="split">
-        <div class="box">
-          <h3>Underbid Warning</h3>
-          <div class="warn" id="warnBox">Enter numbers and calculate.</div>
-          <div class="miniGrid">
-            <div class="mini">
-              <div class="miniLabel">Break-even Price</div>
-              <div class="miniValue" id="mBreakeven">$0.00</div>
-            </div>
-            <div class="mini">
-              <div class="miniLabel">Deposit Amount</div>
-              <div class="miniValue" id="mDeposit">$0.00</div>
-            </div>
-            <div class="mini">
-              <div class="miniLabel">Margin @ Current Bid</div>
-              <div class="miniValue" id="mCurrentMargin">0.00%</div>
-            </div>
-            <div class="mini">
-              <div class="miniLabel">Profit @ Current Bid</div>
-              <div class="miniValue" id="mCurrentProfit">$0.00</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="box">
-          <h3>Project List</h3>
-          <div class="list" id="projectList"></div>
-          <div class="hint">Saved locally in your browser (no account needed).</div>
-        </div>
-      </div>
-
-      <details class="explain">
-        <summary>Built-in Definitions (Margin vs Markup, Overhead, Burden)</summary>
-        <div class="defs">
-          <p><b>Margin</b> = Profit ÷ Price. If you want 20% margin on a $10,000 job, profit is $2,000.</p>
-          <p><b>Markup</b> = Profit ÷ Cost. Markup is not the same as margin.</p>
-          <p><b>Labor burden</b> adds real costs (taxes, comp, benefits) to the base labor rate.</p>
-          <p><b>Overhead</b> is the cost to stay open (insurance, fuel, admin, tools, phone, rent). This app allocates overhead as a percent of direct costs.</p>
-          <p><b>Contingency</b> protects you from surprises. It is added on top of the price calculation.</p>
-        </div>
-      </details>
-    </section>
-  </main>
-
-  <footer class="footer">
-    <div>Job Pricing Engine • Local-only app • No logins • No data leaves your device</div>
-  </footer>
-
-  <script src="app.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
